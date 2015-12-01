@@ -17,6 +17,7 @@ type ScoreBox =
     | Full of Roll
     | LargeStraight of Roll
     | SmallStraight of Roll
+    | Luck of Roll
 
 let sum value inRoll =
     inRoll
@@ -64,6 +65,7 @@ let result scoreBox =
         straight 5 40 roll
     | SmallStraight roll ->
         straight 4 30 roll
+    | Luck roll -> List.sum roll
 
 [<Fact>]
 let ``Given a roll [5,5,5,5,5] and a score box, return result`` () =
@@ -132,3 +134,53 @@ let ``Given a roll [1,2,3,4,2] and a score box FourOfAKind, return result`` () =
 [<Fact>]
 let ``Given a roll [1,2,3,3,2] and a score box FourOfAKind, return result`` () =
     result (SmallStraight [1;2;3;3;2]) |> should equal 0
+
+[<Fact>]
+let ``Given a roll [1,2,3,3,2] and a score box Luck, return result`` () =
+    result (Luck [1;2;3;3;2]) |> should equal 11
+
+open System.Collections.Generic
+
+type ScoreBoard = Map<ScoreBox, int>
+
+type Player = { Name: string; ScoreBoard: ScoreBoard }
+
+let player = { Name = "Joe"; ScoreBoard = Map.empty }
+
+let score scoreBox player =
+    if player.ScoreBoard |> Map.exists (fun x y -> x = scoreBox)
+    then
+        failwith "cannot score twice"
+    else
+        let newScoreBoard = player.ScoreBoard.Add(scoreBox, result scoreBox)
+        { player with ScoreBoard = newScoreBoard }
+
+[<Fact>]
+let ``Given a Player, a Roll and a ScoreBox, when score, return player with ScoreBoard updated`` () =
+    let scoreBox = LargeStraight [1;2;3;4;5]
+    let result scoreBox = 40
+    let expectedScoreBoard = Map.empty.Add(scoreBox, 40)
+    player |> score scoreBox
+    |> should equal { player with ScoreBoard = expectedScoreBoard }
+
+[<Fact>]
+let ``Given a Player, a Roll and a LargeStraight ScoreBox, when score, raise error 'cannot score twice on a score box''`` () =
+    let scoreBox = LargeStraight [1;2;3;4;5]
+    let result scoreBox = 40
+    let alreadyPlayedScoreBox = Map.empty.Add(scoreBox, 40)
+    ( fun () -> { player with ScoreBoard = alreadyPlayedScoreBox }
+                |> score scoreBox |> ignore )
+    |> should throw typeof<System.Exception>
+
+let rec play player =
+    // TODO roll (Random) => Roll
+    let roll = [1;2;3;4;5]
+    // TODO ask player which ScoreBox for this roll OR reroll
+    let scoreBox = LargeStraight roll
+
+    let playerNextTurn = player |> score scoreBox
+    if playerNextTurn.ScoreBoard |> Map.toList |> List.length = 13
+    then
+        playerNextTurn.ScoreBoard |> Map.toList |> List.map snd |> List.sum
+    else
+        playerNextTurn |> play
