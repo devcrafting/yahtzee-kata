@@ -147,7 +147,7 @@ type Player = { Name: string; ScoreBoard: ScoreBoard }
 
 let player = { Name = "Joe"; ScoreBoard = Map.empty }
 
-let score scoreBox player =
+let score result scoreBox player =
     if player.ScoreBoard |> Map.exists (fun x y -> x = scoreBox)
     then
         failwith "cannot score twice"
@@ -160,7 +160,7 @@ let ``Given a Player, a Roll and a ScoreBox, when score, return player with Scor
     let scoreBox = LargeStraight [1;2;3;4;5]
     let result scoreBox = 40
     let expectedScoreBoard = Map.empty.Add(scoreBox, 40)
-    player |> score scoreBox
+    player |> score result scoreBox
     |> should equal { player with ScoreBoard = expectedScoreBoard }
 
 [<Fact>]
@@ -169,7 +169,7 @@ let ``Given a Player, a Roll and a LargeStraight ScoreBox, when score, raise err
     let result scoreBox = 40
     let alreadyPlayedScoreBox = Map.empty.Add(scoreBox, 40)
     ( fun () -> { player with ScoreBoard = alreadyPlayedScoreBox }
-                |> score scoreBox |> ignore )
+                |> score result scoreBox |> ignore )
     |> should throw typeof<System.Exception>
 
 let rec play player =
@@ -178,7 +178,7 @@ let rec play player =
     // TODO ask player which ScoreBox for this roll OR reroll
     let scoreBox = LargeStraight roll
 
-    let playerNextTurn = player |> score scoreBox
+    let playerNextTurn = player |> score result scoreBox
     if playerNextTurn.ScoreBoard |> Map.toList |> List.length = 13
     then
         playerNextTurn.ScoreBoard |> Map.toList |> List.map snd |> List.sum
