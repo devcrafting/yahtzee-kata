@@ -1,0 +1,4 @@
+[Fake]
+linuxPrefix = "sh"
+command = "build.sh"
+build = "build.fsx"

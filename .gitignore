@@ -1,0 +1,5 @@
+packages
+.paket
+.fake
+build
+TestResult.xml
